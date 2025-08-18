@@ -231,9 +231,14 @@ class HBSYSTEM(DatagramProtocol):
             self.dereg = self.peer_dereg
 
     def startProtocol(self):
-        # Set up periodic loop for tracking pings from peers. Run every 'PING_TIME' seconds
+        # Set up periodic loop for tracking pings from peers.
+        # Delay startup by 20 seconds to avoid immediate peer connections on launch.
         self._system_maintenance = task.LoopingCall(self.maintenance_loop)
-        self._system_maintenance_loop = self._system_maintenance.start(self._CONFIG['GLOBAL']['PING_TIME'])
+        reactor.callLater(20, lambda: setattr(
+            self,
+            '_system_maintenance_loop',
+            self._system_maintenance.start(self._CONFIG['GLOBAL']['PING_TIME'])
+        ))
 
     # Aliased in __init__ to maintenance_loop if system is a master
     def master_maintenance_loop(self):
